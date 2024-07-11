@@ -18,9 +18,6 @@ def get_auth_url():
     )
     return auth_url
 
-print("Go to the following URL to authorize the application:")
-print(get_auth_url())
-
 def get_access_token(auth_code):
     url = "https://accounts.spotify.com/api/token"
     headers = {
@@ -43,32 +40,23 @@ def get_auth_header(token):
 
 # --- --- --- --- --- ---
 
-def get_user_playlist_id(token, playlist_name):
-    url = "https://api.spotify.com/v1/search"
-    headers = get_auth_header(token)
-    # construct our query
-    query = f"?q={playlist_name}&type=playlist&limit=1"
-
-    query_url = url + query
-    result = get(query_url, headers=headers)
-    json_result = json.loads(result.content)
-
-    return json_result
-
 def get_user_playlists(token):
     url = "https://api.spotify.com/v1/me/playlists"
     headers = get_auth_header(token)
 
     result = get(url, headers=headers)
-    json_result = json.loads(result.content)
+    json_result = json.loads(result.content)["items"]
     
     return json_result
 
-
-
 # --- --- --- --- --- ---
+
 print("Go to the following URL to authorize the application:")
 print(get_auth_url())
 
 auth_code = input("Enter the authorization code you received from Spotify: ")
 token = get_access_token(auth_code)
+
+playlists = get_user_playlists(token)
+for idx, playlist in enumerate(playlists):
+    print(f"{idx + 1}. {playlist["name"]}")
