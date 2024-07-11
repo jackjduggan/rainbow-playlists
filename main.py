@@ -58,6 +58,26 @@ def get_user_playlists(token):
     
     return json_result_owned
 
+def display_user_playlists(playlists):
+    for playlist in playlists:
+        print(f"{playlist["name"]}, id={playlist["id"]}")
+        playlistList.append((playlist["id"], playlist["name"]))
+
+def get_playlist_tracks(token, playlist_id):
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    headers = get_auth_header(token)
+
+    result = get(url, headers=headers)
+    json_result = result.json()["items"]
+    
+    print(json_result)
+    return json_result
+
+def display_tracks_in_playlist(tracks):
+    for idx, item in enumerate(tracks):
+        track = item["track"]
+        print(f"{idx + 1}. {track['name']} by {track['artists'][0]['name']}")
+
 # --- --- --- --- --- ---
 
 print("Go to the following URL to authorize the application:")
@@ -67,7 +87,13 @@ auth_code = input("Enter the authorization code you received from Spotify: ")
 token = get_access_token(auth_code)
 
 playlists = get_user_playlists(token)
-for idx, playlist in enumerate(playlists):
-    print(f"{idx + 1}. {playlist["name"]}")
+playlistList = []
+display_user_playlists(playlists)
 
-# print(get_user_name(token))
+choice = input("Enter the id of the playlist you wish to rainbow-ify: ")
+
+tracks = get_playlist_tracks(token, choice)
+
+# Display tracks
+print(f"You selected: {[playlist for playlist in playlistList if playlist[0] == choice][0][1]}")
+display_tracks_in_playlist(tracks)
