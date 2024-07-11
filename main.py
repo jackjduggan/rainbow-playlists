@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from requests import post, get
 import os, base64, json
+from colorthief import ColorThief
 
 # load environment variables from .env file
 load_dotenv()
@@ -70,13 +71,13 @@ def get_playlist_tracks(token, playlist_id):
     result = get(url, headers=headers)
     json_result = result.json()["items"]
     
-    print(json_result)
+    # print(json_result)
     return json_result
 
 def display_tracks_in_playlist(tracks):
     for idx, item in enumerate(tracks):
         track = item["track"]
-        print(f"{idx + 1}. {track['name']} by {track['artists'][0]['name']}")
+        print(f"{idx + 1}. {track['name']} by {track['artists'][0]['name']}, id={track['id']}")
 
 # --- --- --- --- --- ---
 
@@ -97,3 +98,20 @@ tracks = get_playlist_tracks(token, choice)
 # Display tracks
 print(f"You selected: {[playlist for playlist in playlistList if playlist[0] == choice][0][1]}")
 display_tracks_in_playlist(tracks)
+
+def get_track_cover_art(token, track_id):
+    url = f"https://api.spotify.com/v1/tracks/{track_id}"
+    headers = get_auth_header(token)
+
+    result = get(url, headers=headers)
+    json_result = result.json()["album"]["images"][-1]["url"]
+    
+    print(json_result)
+    return json_result
+
+
+def get_dominant_color(image):
+    ct = ColorThief(f"images/{image}")
+    most_dominant_color = ct.get_color(quality=1)
+
+get_track_cover_art(token, "2VEZx7NWsZ1D0eJ4uv5Fym")
