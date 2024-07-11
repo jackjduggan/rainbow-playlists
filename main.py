@@ -39,6 +39,14 @@ def get_auth_header(token):
     return {"Authorization": "Bearer " + token}
 
 # --- --- --- --- --- ---
+def get_user_name(token):
+    url = "https://api.spotify.com/v1/me"
+    headers = get_auth_header(token)
+
+    result = get(url, headers=headers)
+    json_result = json.loads(result.content)["id"]
+
+    return json_result
 
 def get_user_playlists(token):
     url = "https://api.spotify.com/v1/me/playlists"
@@ -46,8 +54,9 @@ def get_user_playlists(token):
 
     result = get(url, headers=headers)
     json_result = json.loads(result.content)["items"]
+    json_result_owned = [playlist for playlist in json_result if playlist["owner"]["id"] == get_user_name(token) ]
     
-    return json_result
+    return json_result_owned
 
 # --- --- --- --- --- ---
 
@@ -60,3 +69,5 @@ token = get_access_token(auth_code)
 playlists = get_user_playlists(token)
 for idx, playlist in enumerate(playlists):
     print(f"{idx + 1}. {playlist["name"]}")
+
+# print(get_user_name(token))
