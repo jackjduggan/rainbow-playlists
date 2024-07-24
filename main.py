@@ -12,7 +12,7 @@ CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 REDIRECT_URI = "http://localhost:8888/callback"  # Make sure to register this URL in your Spotify app settings
 
 def get_auth_url():
-    scopes = "user-library-read playlist-read-private"
+    scopes = "user-library-read playlist-read-private playlist-modify-public playlist-modify-private"
     auth_url = (
         f"https://accounts.spotify.com/authorize?response_type=code"
         f"&client_id={CLIENT_ID}"
@@ -180,6 +180,64 @@ sorted_album_covers = sorted(dominant_colors.items(), key=lambda item: find_clos
 for file, color in sorted_album_covers:
     print(f"Album cover {file} has dominant color {color} and is closest to predefined color {find_closest_predefined_color(color)}")
 
-
-
 "Sort by the indexes then, and in theory the album covers should be ordered...?"
+"""
+Album cover 0pQskrTITgmCMyr85tb9qq_image.png has dominant color (33, 29, 28) and is closest to predefined color (0, 0, 0)
+Album cover 186hvCTyrni4KT9nwIQ7zS_image.png has dominant color (14, 14, 9) and is closest to predefined color (0, 0, 0)
+Album cover 2cGxRwrMyEAp8dEbuZaVv6_image.png has dominant color (13, 14, 14) and is closest to predefined color (0, 0, 0)
+...
+"""
+
+### -------------
+# sorted album covers contains (filname, dominant_color) tuples. Need to now map these filename's back to their track ID
+filename_to_track = {track['track']['id'] + "_image.png": track for track in tracks}
+
+def create_user_playlist(token, user_id):
+    url = f"https://api.spotify.com/v1/users/{user_id}/playlists"
+    headers = get_auth_header(token)
+    data = {
+        "name": "Your Rainbow Playlist",
+        "description": "Made with Python",
+        "public": False
+    }
+
+    result = post(url=url, headers=headers, json=data) # using the json parameter automatically serializes the data
+    print(f"Executing.. with {data}")
+    if result.status_code == 201:
+        print("Playlist created successfully.")
+        return result.json()["id"] # returns the playlist ID upon successful creation so we can add songs to it
+    else:
+        print(f"Failed to create playlist. Status code: {result.status_code}, Response: {result.json()}")
+        return None
+
+
+playlist_id = create_user_playlist(token, get_user_name(token))
+
+def get_uris(tracks):
+    uris = []
+    for track in tracks:
+        track = track["track"]
+        uris.append(track["uri"])
+    return uris
+
+uris = []
+for filename, _ in sorted_album_covers:
+    track = filename_to_track.get(filename)
+    if track:
+        uris.append(track["track"]["uri"])
+
+def populate_rainbow_playlist(token, playlist_id, uris):
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    headers = get_auth_header(token)
+    data = {
+        "uris": uris
+    }
+
+    result = post(url=url, headers=headers, json=data)
+    if result.status_code == 201:
+        print("Tracks added successfully.")
+    else:
+        print(f"Failed to add tracks. Status code: {result.status_code}, Response: {result.json()}")
+
+populate_rainbow_playlist(token, playlist_id, uris)
+
