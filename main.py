@@ -170,15 +170,22 @@ def calculate_euclidean_distance(color1, color2):
     # e_d = (r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2
     return np.sqrt(sum((a - b) ** 2 for a, b in zip(color1, color2)))
 
-def find_closest_predefined_color(dominant_color):
+def find_closest_predefined_color_index(dominant_color):
     distances = [calculate_euclidean_distance(dominant_color, predefined_color) for predefined_color in colors]
     min_distance_index = distances.index(min(distances))
-    return colors[min_distance_index]
+    return min_distance_index
 
-sorted_album_covers = sorted(dominant_colors.items(), key=lambda item: find_closest_predefined_color(item[1]))
+# Extract dominant colors and assign a sorting index based on the closest predefined color
+track_color_indices = []
+for filename, dominant_color in dominant_colors.items():
+    closest_color_index = find_closest_predefined_color_index(dominant_color)
+    track_color_indices.append((filename, closest_color_index))
 
-for file, color in sorted_album_covers:
-    print(f"Album cover {file} has dominant color {color} and is closest to predefined color {find_closest_predefined_color(color)}")
+# Sort the tracks based on the color indices
+track_color_indices.sort(key=lambda item: item[1])
+
+# for file, color in sorted_album_covers:
+#     print(f"Album cover {file} has dominant color {color} and is closest to predefined color {find_closest_predefined_color(color)}")
 
 "Sort by the indexes then, and in theory the album covers should be ordered...?"
 """
@@ -221,7 +228,7 @@ def get_uris(tracks):
     return uris
 
 uris = []
-for filename, _ in sorted_album_covers:
+for filename, _ in track_color_indices:
     track = filename_to_track.get(filename)
     if track:
         uris.append(track["track"]["uri"])
