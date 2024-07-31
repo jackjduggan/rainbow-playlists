@@ -16,7 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from playlists.views import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', views.index, name='index')
+    path('login/', views.login, name='login'),
+    path('callback/', views.callback, name='callback'),
+    path('playlists/', views.playlists, name='playlists'),
+    path('rainbowify/', views.rainbowify, name='rainbowify'),
 ]
