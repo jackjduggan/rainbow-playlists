@@ -2,23 +2,83 @@
 <html>
 <head>
     <title>Your Playlists - Rainbow Playlists</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #ffcc00;
+            margin: 0;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        img {
+            display: block;
+            margin: 0 auto;
+            border-radius: 50%;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 10px 0;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        form {
+            display: inline-block;
+        }
+        input[type="submit"] {
+            background-color: #ffcc00;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        input[type="submit"]:hover {
+            background-color: #ff9900;
+        }
+    </style>
 </head>
 <body>
     <h1>Your Playlists</h1>
-    <img src="https://media.wired.com/photos/59094a0ad8c8646f38eef2ae/master/pass/rainbow-sq.jpg" width="100">
-    <ul>
-    <!-- Django templating -->
-    <!-- Loop through each playlist-->
-    {% for playlist in playlists %}
-        <!-- Displays name of playlist, and a form that posts the data to the rainbowify view -->
-        <li>{{ playlist.name }} - <form action="{% url 'rainbowify' %}" method="post">
-            <!-- cross-site request forgery protection -->
-            {% csrf_token %}
-            <!-- Includes playlist ID in POST to make it easier -->
-            <input type="hidden" name="playlist_id" value="{{ playlist.id }}">
-            <input type="submit" value="Rainbowify">
-        </form></li>
-    {% endfor %}
-    </ul>
+    <div class="container">
+        <img src="https://media.wired.com/photos/59094a0ad8c8646f38eef2ae/master/pass/rainbow-sq.jpg" width="100" alt="Rainbow Image">
+        <ul>
+        <!-- Django templating -->
+        <!-- Loop through each playlist-->
+        {% for playlist in playlists %}
+            <!-- Displays name of playlist, and a form that posts the data to the rainbowify view -->
+            <li>{{ playlist.name }} - 
+                <form action="{% url 'rainbowify' %}" method="post">
+                    <!-- cross-site request forgery protection -->
+                    {% csrf_token %}
+                    <!-- Includes playlist ID in POST to make it easier -->
+                    <input type="hidden" name="playlist_id" value="{{ playlist.id }}">
+                    <input type="submit" value="Rainbowify">
+                </form>
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
 </body>
 </html>
