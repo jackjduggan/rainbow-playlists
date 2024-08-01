@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from dotenv import load_dotenv
 from requests import post, get
-import os
+import os, json
 
 # load environment variables
 load_dotenv()
@@ -23,7 +23,7 @@ def login(request):
         f"&scope={SCOPES}"
         f"&redirect_uri={REDIRECT_URI}"
     )
-    return auth_url
+    return render(auth_url)
 
 # callback?
 def callback(request):
@@ -40,11 +40,22 @@ def callback(request):
         "client_secret": CLIENT_SECRET,
     }
     response = post(url, headers=headers, data=data)
+    response_data = response.json()
+    ## storing values across the session.
+    request.session['access_token'] = response_data['access_token']
+    request.session['refresh_token'] = response_data['refresh_token']
+    return render(playlists)
 
 
 # playlists
-def playlists():
-    pass
+def playlists(request):
+    # now that the token values are session-wide, they can be accessed
+    access_token = request.session.get('access_token')
+    headers = {'Authorization': f'Bearer {access_token}'}
+    url = "https://api.spotify.com/v1/me/playlists"
+    response = get(url=url, headers=headers)
+    json_result = json.loads(response.content)["items"]
+    return render(request, 'playlists.html', {'playlists': playlists}) # TODO dont forget to add loop to template
 
 # rainbowify
 def rainbowify():
