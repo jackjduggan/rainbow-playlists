@@ -12,7 +12,7 @@ CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 REDIRECT_URI = "http://localhost:8888/callback"  # Make sure to register this URL in your Spotify app settings
 
 def get_auth_url():
-    scopes = "user-library-read playlist-read-private playlist-modify-public playlist-modify-private"
+    #scopes = "user-library-read playlist-read-private playlist-modify-public playlist-modify-private"
     auth_url = (
         f"https://accounts.spotify.com/authorize?response_type=code"
         f"&client_id={CLIENT_ID}"
