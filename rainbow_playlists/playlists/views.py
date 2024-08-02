@@ -131,6 +131,8 @@ def rainbowify(request):
         album_image_url = track['track']['album']['images'][-1]['url']
         download_image(album_image_url, f"{track_id}_image.png")
 
+    dominant_colors = extract_dominant_colors()
+    
     # find predefined colour closest to each dominant colour using euclidean distances
     track_color_indices = []
     for filename, dominant_color in dominant_colors.items():
