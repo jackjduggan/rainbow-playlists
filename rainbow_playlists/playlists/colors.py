@@ -1,4 +1,9 @@
-# these color values and order were obtained from https://www.rapidtables.com/web/color/RGB_Color.html
+"""
+This module contains an array of rgb tuples of predefined colours.
+These colours are compared against the dominant colours extracted in views.py.
+"""
+
+# ref: https://www.rapidtables.com/web/color/RGB_Color.html
 
 colors = [
     (128, 0, 0),        # maroon
