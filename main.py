@@ -11,32 +11,32 @@ CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 REDIRECT_URI = "http://localhost:8888/callback"  # Make sure to register this URL in your Spotify app settings
 
-def get_auth_url():
-    #scopes = "user-library-read playlist-read-private playlist-modify-public playlist-modify-private"
-    auth_url = (
-        f"https://accounts.spotify.com/authorize?response_type=code"
-        f"&client_id={CLIENT_ID}"
-        f"&scope={scopes}"
-        f"&redirect_uri={REDIRECT_URI}"
-    )
-    return auth_url
+# def get_auth_url():
+#     #scopes = "user-library-read playlist-read-private playlist-modify-public playlist-modify-private"
+#     auth_url = (
+#         f"https://accounts.spotify.com/authorize?response_type=code"
+#         f"&client_id={CLIENT_ID}"
+#         f"&scope={scopes}"
+#         f"&redirect_uri={REDIRECT_URI}"
+#     )
+#     return auth_url
 
-def get_access_token(auth_code):
-    url = "https://accounts.spotify.com/api/token"
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-    }
-    data = {
-        "grant_type": "authorization_code",
-        "code": auth_code,
-        "redirect_uri": REDIRECT_URI,
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-    }
+# def get_access_token(auth_code):
+#     url = "https://accounts.spotify.com/api/token"
+#     headers = {
+#         "Content-Type": "application/x-www-form-urlencoded",
+#     }
+#     data = {
+#         "grant_type": "authorization_code",
+#         "code": auth_code,
+#         "redirect_uri": REDIRECT_URI,
+#         "client_id": CLIENT_ID,
+#         "client_secret": CLIENT_SECRET,
+#     }
 
-    response = post(url, headers=headers, data=data)
-    response_data = response.json()
-    return response_data["access_token"]
+#     response = post(url, headers=headers, data=data)
+#     response_data = response.json()
+#     return response_data["access_token"]
 
 def get_auth_header(token):
     return {"Authorization": "Bearer " + token}
@@ -83,11 +83,11 @@ def display_tracks_in_playlist(tracks):
 
 # --- --- --- --- --- ---
 
-print("Go to the following URL to authorize the application:")
-print(get_auth_url())
+# print("Go to the following URL to authorize the application:")
+# print(get_auth_url())
 
-auth_code = input("Enter the authorization code you received from Spotify: ")
-token = get_access_token(auth_code)
+# auth_code = input("Enter the authorization code you received from Spotify: ")
+# token = get_access_token(auth_code)
 
 playlists = get_user_playlists(token)
 playlistList = []
@@ -163,7 +163,7 @@ Calculate the euclidean distances between the dominant colours and the list of p
 Assign the index (+1?) of the pre-def colour with the shortest euclidean distance to the album cover somehow?
 """
 
-from colors import colors
+from rainbow_playlists.playlists.colors import colors
 
 def calculate_euclidean_distance(color1, color2):
     # r2, g2, b2 = predef_color[index_2][0], predef_color[index_2][1], predef_color[index_2][1]
