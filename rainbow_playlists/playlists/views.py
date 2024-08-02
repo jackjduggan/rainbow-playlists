@@ -7,13 +7,14 @@ and create a new playlist where tracks are sorted based on the dominant colors o
 import os
 import json
 import shutil
+import requests
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from dotenv import load_dotenv
 from colorthief import ColorThief
-import requests
 from requests import post, get
 import numpy as np
+from .colors import colors
 
 # load environment variables
 load_dotenv()
@@ -32,7 +33,8 @@ def index(request):
     """
     return render(request, 'index.html')
 
-def login(request):
+
+def login():
     """
     Redirect the user to the Spotify login page.
 
@@ -48,6 +50,7 @@ def login(request):
     # return render(auth_url) # this doesn't work as it expects a local template
     # instead, need to use redirect to go to an external page
     return redirect(auth_url)
+
 
 def callback(request):
     """
@@ -72,7 +75,7 @@ def callback(request):
         "client_id": CLIENT_ID,
         "client_secret": CLIENT_SECRET,
     }
-    response = post(url, headers=headers, data=data)
+    response = post(url, headers=headers, data=data, timeout=10)
     response_data = response.json()
 
     # Debugging: print the entire response data
@@ -82,6 +85,7 @@ def callback(request):
     request.session['access_token'] = response_data['access_token']
     request.session['refresh_token'] = response_data['refresh_token']
     return redirect(playlists)
+
 
 def playlists(request):
     """
@@ -94,9 +98,10 @@ def playlists(request):
     access_token = request.session.get('access_token')
     headers = {'Authorization': f'Bearer {access_token}'}
     url = "https://api.spotify.com/v1/me/playlists"
-    response = get(url=url, headers=headers)
+    response = get(url=url, headers=headers, timeout=10)
     json_result = json.loads(response.content)["items"]
     return render(request, 'playlists.html', {'playlists': json_result})
+
 
 def rainbowify(request):
     """
@@ -113,7 +118,7 @@ def rainbowify(request):
     # generate response
     url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
     headers = get_auth_header(access_token)
-    result = get(url, headers=headers)
+    result = get(url, headers=headers, timeout=10)
 
     tracks_json_result = result.json()["items"]
 
@@ -133,12 +138,10 @@ def rainbowify(request):
         dominant_color = get_dominant_color(file)
         dominant_colors[file] = dominant_color
 
-    # import predefined colours array from 'colors.py'
-    from .colors import colors
     # find predefined colour closest to each dominant colour using euclidean distances
     track_color_indices = []
     for filename, dominant_color in dominant_colors.items():
-        closest_color_index = find_closest_predefined_color_index(dominant_color, colors)
+        closest_color_index = find_closest_predefined_color_index(dominant_color)
         track_color_indices.append((filename, closest_color_index))
 
     # sort the tracks based on the colour indices
@@ -165,6 +168,7 @@ def rainbowify(request):
 
     return redirect('playlists')
 
+
 # Helper Functions
 def get_auth_header(token):
     """
@@ -175,6 +179,7 @@ def get_auth_header(token):
     """
     return {"Authorization": "Bearer " + token}
 
+
 def download_image(image_url, filename):
     """
     Download an image from a URL.
@@ -182,11 +187,12 @@ def download_image(image_url, filename):
     :param image_url: URL of the image
     :param filename: Name of the file to save the image as
     """
-    response = requests.get(image_url, stream=True)
+    response = requests.get(image_url, stream=True, timeout=10)
     with open(f"art_images/{filename}", "wb") as file:
         for chunk in response.iter_content(chunk_size=1024): # ref1
             if chunk: # filter out keep-alive new chunks
                 file.write(chunk)
+
 
 def reset_directory(dirname):
     """
@@ -200,6 +206,7 @@ def reset_directory(dirname):
     # recreate the directory:
     os.makedirs(dirname)
 
+
 def get_dominant_color(image):
     """
     Get the dominant color from an image.
@@ -211,6 +218,7 @@ def get_dominant_color(image):
     most_dominant_color = ct.get_color(quality=1)
     return most_dominant_color
 
+
 def calculate_euclidean_distance(color1, color2):
     """
     Calculate the Euclidean distance between two colors.
@@ -221,7 +229,8 @@ def calculate_euclidean_distance(color1, color2):
     """
     return np.sqrt(sum((a - b) ** 2 for a, b in zip(color1, color2)))
 
-def find_closest_predefined_color_index(dominant_color, colors):
+
+def find_closest_predefined_color_index(dominant_color):
     """
     Find the index of the predefined color closest to the given dominant color.
 
@@ -231,9 +240,9 @@ def find_closest_predefined_color_index(dominant_color, colors):
     """
     distances = [calculate_euclidean_distance(
         dominant_color, predefined_color) for predefined_color in colors]
-    
     min_distance_index = distances.index(min(distances))
     return min_distance_index
+
 
 def get_user_name(token):
     """
@@ -244,9 +253,10 @@ def get_user_name(token):
     """
     url = "https://api.spotify.com/v1/me"
     headers = get_auth_header(token)
-    result = get(url, headers=headers)
+    result = get(url, headers=headers, timeout=10)
     json_result = json.loads(result.content)["id"]
     return json_result
+
 
 def create_user_playlist(token, user_id):
     """
@@ -264,15 +274,16 @@ def create_user_playlist(token, user_id):
         "public": False
     }
 
-    result = post(url=url, headers=headers, json=data) # json param to serialize data
+    result = post(url=url, headers=headers, json=data, timeout=10)
     print(f"Executing.. with {data}")
     if result.status_code == 201:
         print("Playlist created successfully.")
-        return result.json()["id"] # returns the playlist ID upon successful creation
-    else:
-        print(f"Playlist creation error. Code: {result.status_code}, Response: {result.json()}")
-        return None
-    
+        # returns the playlist ID upon successful creation
+        return result.json()["id"]
+    print(f"Playlist creation error. Code: {result.status_code}, Response: {result.json()}")
+    return None
+
+
 def populate_rainbow_playlist(token, playlist_id, uris):
     """
     Populate the playlist with the given URIs.
@@ -285,7 +296,7 @@ def populate_rainbow_playlist(token, playlist_id, uris):
     headers = get_auth_header(token)
     data = {"uris": uris}
 
-    result = post(url=url, headers=headers, json=data)
+    result = post(url=url, headers=headers, json=data, timeout=10)
     if result.status_code == 201:
         print("Tracks added successfully.")
     else:
