@@ -19,7 +19,7 @@ from django.urls import path
 from playlists import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    #path('admin/', admin.site.urls),
     path('', views.index, name='index'),
     path('login/', views.login, name='login'),
     path('callback/', views.callback, name='callback'),

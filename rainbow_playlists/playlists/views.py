@@ -4,6 +4,7 @@ from django.conf import settings
 from dotenv import load_dotenv
 from colorthief import ColorThief
 from requests import post, get
+import numpy as np
 import os, json, shutil, requests
 
 # load environment variables
@@ -83,6 +84,7 @@ def rainbowify(request):
     result = get(url, headers=headers)
 
     tracks_json_result = result.json()["items"]
+
     # set images directory and reset
     images_directory = 'art_images/'
     reset_directory(images_directory)
@@ -93,7 +95,44 @@ def rainbowify(request):
         album_image_url = track['track']['album']['images'][-1]['url']
         download_image(album_image_url, f"{track_id}_image.png")
 
-    
+    # extract dominant colours
+    dominant_colors = {}
+    for file in os.listdir(images_directory):
+        dominant_color = get_dominant_color(file)
+        dominant_colors[file] = dominant_color
+
+    # import predefined colours array from 'colors.py'
+    from .colors import colors
+    # find predefined colour closest to each dominant colour using euclidean distances
+    track_color_indices = []
+    for filename, dominant_color in dominant_colors.items():
+        closest_color_index = find_closest_predefined_color_index(dominant_color, colors)
+        track_color_indices.append((filename, closest_color_index))
+
+    # sort the tracks based on the colour indices
+    track_color_indices.sort(key=lambda item: item[1])
+
+    # sorted album covers contains (filname, dominant_color) tuples. Need to now map these filename's back to their track ID
+    filename_to_track = {track['track']['id'] + "_image.png": track for track in tracks_json_result}
+
+    # uris
+    uris = []
+    for filename, _ in track_color_indices:
+        track = filename_to_track.get(filename)
+        if track:
+            uris.append(track["track"]["uri"])
+
+    # get the user's user id (for playlist creation)
+    user_id = get_user_name(access_token)
+
+    # create the new, 'rainbowified' playlist (function returns playlist id)
+    new_playlist_id = create_user_playlist(access_token, user_id)
+    # and populate the new playlist with the sorted songs
+    if new_playlist_id:
+        populate_rainbow_playlist(access_token, new_playlist_id, uris)
+
+    return redirect('playlists')
+
 # Helper Functions
 def get_auth_header(token):
     return {"Authorization": "Bearer " + token}
@@ -121,6 +160,18 @@ def calculate_euclidean_distance(color1, color2):
     # r2, g2, b2 = predef_color[index_2][0], predef_color[index_2][1], predef_color[index_2][1]
     # e_d = (r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2
     return np.sqrt(sum((a - b) ** 2 for a, b in zip(color1, color2)))
+
+def find_closest_predefined_color_index(dominant_color, colors):
+    distances = [calculate_euclidean_distance(dominant_color, predefined_color) for predefined_color in colors]
+    min_distance_index = distances.index(min(distances))
+    return min_distance_index
+
+def get_user_name(token):
+    url = "https://api.spotify.com/v1/me"
+    headers = get_auth_header(token)
+    result = get(url, headers=headers)
+    json_result = json.loads(result.content)["id"]
+    return json_result
 
 def create_user_playlist(token, user_id):
     url = f"https://api.spotify.com/v1/users/{user_id}/playlists"
