@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -63,7 +64,7 @@
 <body>
     <h1>Your Playlists</h1>
     <div class="container">
-        <img src="../../../logo.png" width="100" alt="Rainbow Image">
+        <img src="{% static 'playlists/logo.png' %}" width="250" alt="Logo">
         <p>Made by Jack Duggan</p>
         <p>Choose a playlist below and select <strong>Rainbowify</strong>!</p>
         <ul>

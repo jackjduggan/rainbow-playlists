@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -51,7 +52,7 @@
 </head>
 <body>
     <div class="container">
-        <img src="../../../logo.png" alt="Rainbow Image">
+        <img src="{% static 'playlists/logo.png' %}" width="500" alt="Logo">
         <p>Made by Jack Duggan</p>
         <br>
         <p>Rainbow playlists reorders your Spotify playlists based on the colour of the album art!</p>
