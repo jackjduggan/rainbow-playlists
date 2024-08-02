@@ -125,14 +125,10 @@ def rainbowify(request):
     # set images directory and reset
     reset_directory('art_images/')
 
-    # download last available (smallest) version of album art available for each track
-    for track in tracks_json_result:
-        track_id = track['track']['id']
-        album_image_url = track['track']['album']['images'][-1]['url']
-        download_image(album_image_url, f"{track_id}_image.png")
+    download_album_images(tracks_json_result)
 
     dominant_colors = extract_dominant_colors()
-    
+
     # find predefined colour closest to each dominant colour using euclidean distances
     track_color_indices = []
     for filename, dominant_color in dominant_colors.items():
@@ -224,6 +220,22 @@ def calculate_euclidean_distance(color1, color2):
     """
     return np.sqrt(sum((a - b) ** 2 for a, b in zip(color1, color2)))
 
+
+def download_album_images(tracks_json_result):
+    """
+    Download the album images for the given tracks.
+
+    :param tracks_json_result: JSON result of the tracks
+    """
+    images_directory = 'art_images/'
+    reset_directory(images_directory)
+
+    for track in tracks_json_result:
+        track_id = track['track']['id']
+        album_image_url = track['track']['album']['images'][-1]['url']
+        download_image(album_image_url, f"{track_id}_image.png")
+
+
 def extract_dominant_colors():
     """
     Extract the dominant colors from the downloaded album images.
@@ -235,6 +247,7 @@ def extract_dominant_colors():
         dominant_color = get_dominant_color(file)
         dominant_colors[file] = dominant_color
     return dominant_colors
+
 
 def find_closest_predefined_color_index(dominant_color):
     """
