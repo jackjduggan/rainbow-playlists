@@ -2,9 +2,9 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.conf import settings
 from dotenv import load_dotenv
-import requests
+from colorthief import ColorThief
 from requests import post, get
-import os, json
+import os, json, shutil, requests
 
 # load environment variables
 load_dotenv()
@@ -71,5 +71,84 @@ def playlists(request):
     return render(request, 'playlists.html', {'playlists': json_result}) # TODO dont forget to add loop to template
 
 # rainbowify
-def rainbowify():
-    pass
+def rainbowify(request):
+    # get the ID of the chosen playlist
+    playlist_id = request.POST.get('playlist_id')
+    # get the access token
+    access_token = request.session.get('access_token')
+
+    # generate response
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    headers = get_auth_header(access_token)
+    result = get(url, headers=headers)
+
+    tracks_json_result = result.json()["items"]
+    # set images directory and reset
+    images_directory = 'art_images/'
+    reset_directory(images_directory)
+
+    # download last available (smallest) version of album art available for each track
+    for track in tracks_json_result:
+        track_id = track['track']['id']
+        album_image_url = track['track']['album']['images'][-1]['url']
+        download_image(album_image_url, f"{track_id}_image.png")
+
+    
+# Helper Functions
+def get_auth_header(token):
+    return {"Authorization": "Bearer " + token}
+
+def download_image(image_url, filename):
+    response = requests.get(image_url, stream=True)
+    with open(f"art_images/{filename}", "wb") as file:
+        for chunk in response.iter_content(chunk_size=1024): # https://stackoverflow.com/questions/16694907/download-large-file-in-python-with-requests
+                if chunk: # filter out keep-alive new chunks
+                    file.write(chunk)
+
+def reset_directory(dirname):
+    # before adding images, first make sure the working directory is empty:
+    if os.path.exists(dirname):
+        shutil.rmtree(dirname)
+    # recreate the directory:
+    os.makedirs(dirname)
+
+def get_dominant_color(image):
+    ct = ColorThief(f"art_images/{image}")
+    most_dominant_color = ct.get_color(quality=1)
+    return most_dominant_color
+
+def calculate_euclidean_distance(color1, color2):
+    # r2, g2, b2 = predef_color[index_2][0], predef_color[index_2][1], predef_color[index_2][1]
+    # e_d = (r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2
+    return np.sqrt(sum((a - b) ** 2 for a, b in zip(color1, color2)))
+
+def create_user_playlist(token, user_id):
+    url = f"https://api.spotify.com/v1/users/{user_id}/playlists"
+    headers = get_auth_header(token)
+    data = {
+        "name": "Your Rainbow Playlist",
+        "description": "Made with Python",
+        "public": False
+    }
+
+    result = post(url=url, headers=headers, json=data) # using the json parameter automatically serializes the data
+    print(f"Executing.. with {data}")
+    if result.status_code == 201:
+        print("Playlist created successfully.")
+        return result.json()["id"] # returns the playlist ID upon successful creation so we can add songs to it
+    else:
+        print(f"Failed to create playlist. Status code: {result.status_code}, Response: {result.json()}")
+        return None
+    
+def populate_rainbow_playlist(token, playlist_id, uris):
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    headers = get_auth_header(token)
+    data = {
+        "uris": uris
+    }
+
+    result = post(url=url, headers=headers, json=data)
+    if result.status_code == 201:
+        print("Tracks added successfully.")
+    else:
+        print(f"Failed to add tracks. Status code: {result.status_code}, Response: {result.json()}")

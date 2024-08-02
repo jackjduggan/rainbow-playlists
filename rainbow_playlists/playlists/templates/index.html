@@ -33,7 +33,7 @@
         }
         a {
             display: inline-block;
-            background-color: #ffcc00;
+            background-color: #1db954;
             color: white;
             padding: 10px 20px;
             text-align: center;
@@ -44,15 +44,19 @@
             transition: background-color 0.3s ease;
         }
         a:hover {
-            background-color: #ff9900;
+            background-color: #191414;
+            color: #1db954
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to Rainbow Playlists</h1>
-        <img src="https://media.wired.com/photos/59094a0ad8c8646f38eef2ae/master/pass/rainbow-sq.jpg" width="100" alt="Rainbow Image">
+        <img src="../../../logo.png" alt="Rainbow Image">
+        <p>Made by Jack Duggan</p>
         <br>
+        <p>Rainbow playlists reorders your Spotify playlists based on the colour of the album art!</p>
+        <br>
+        <p>Click <strong>Log in with Spotify</strong> below to get started!</p>
         <a href="{% url 'login' %}">Log in with Spotify</a>
     </div>
 </body>
