@@ -34,7 +34,7 @@ def index(request):
     return render(request, 'index.html')
 
 
-def login():
+def login(request): # pylint: disable=unused-argument
     """
     Redirect the user to the Spotify login page.
 
@@ -115,18 +115,16 @@ def rainbowify(request):
     # get the access token
     access_token = request.session.get('access_token')
 
-    # generate response
-    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
-    headers = get_auth_header(access_token)
-    result = get(url, headers=headers, timeout=10)
-
-    tracks_json_result = result.json()["items"]
+    # get the tracks within the chosen playlist
+    tracks_json_result = get_playlist_tracks(playlist_id, access_token)
 
     # set images directory and reset
     reset_directory('art_images/')
 
+    # download the album images for the given tracks
     download_album_images(tracks_json_result)
 
+    # extract the dominant colours from the album images
     dominant_colors = extract_dominant_colors()
 
     # find predefined colour closest to each dominant colour using euclidean distances
@@ -219,6 +217,19 @@ def calculate_euclidean_distance(color1, color2):
     :return: Euclidean distance between the two colors
     """
     return np.sqrt(sum((a - b) ** 2 for a, b in zip(color1, color2)))
+
+def get_playlist_tracks(playlist_id, access_token):
+    """
+    Retrieve the tracks of a given playlist.
+
+    :param playlist_id: ID of the playlist
+    :param access_token: Spotify access token
+    :return: JSON result of the tracks
+    """
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    headers = get_auth_header(access_token)
+    result = get(url, headers=headers, timeout=10)
+    return result.json()["items"]
 
 
 def download_album_images(tracks_json_result):
